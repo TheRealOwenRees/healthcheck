@@ -1,0 +1,11 @@
+version: "2.21"
+
+services:
+  healthcheck:
+    image: healthcheck
+    container_name: healthcheck
+    build: .
+#    environment:
+#      - PORT=8080
+#      - ENV=production
+
