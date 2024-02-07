@@ -12,9 +12,17 @@ import (
 	"time"
 )
 
+type CertificateDetails struct {
+	Issuer     string
+	Domain     string
+	ValidFrom  time.Time
+	ValidUntil time.Time
+}
+
 type Responses struct {
 	Website    string `json:"website"`
 	StatusCode int    `json:"status"`
+	CertificateDetails
 }
 
 type EmbedField struct {
@@ -36,34 +44,41 @@ type DiscordEmbed struct {
 
 const DateFormat = "02/01/2006 15:04:05"
 
-var sites = map[string]string{
-	"Echecs France Results API": os.Getenv("ECHECS_FRANCE_RESULTS_API"),
-	"Chess PDF API":             os.Getenv("CHESS_PDF_API"),
-}
-
-func getHealth(url string) (*http.Response, error) {
+func getHealth(url string) (*http.Response, CertificateDetails, error) {
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, err
+		return nil, CertificateDetails{}, err
 	}
+
+	var certDetails CertificateDetails
+	if resp.TLS != nil && len(resp.TLS.PeerCertificates) > 0 {
+		cert := resp.TLS.PeerCertificates[0]
+		certDetails = CertificateDetails{
+			Issuer:     cert.Issuer.Organization[0],
+			Domain:     cert.Subject.CommonName,
+			ValidFrom:  cert.NotBefore,
+			ValidUntil: cert.NotAfter,
+		}
+	}
+
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
 			log.Printf("Failed to close response body: %v", err)
 		}
 	}(resp.Body)
-	return resp, nil
+	return resp, certDetails, nil
 }
 
-func checkHealthOfSites() ([]Responses, error) {
+func checkHealthOfSites(sites map[string]string) ([]Responses, error) {
 	var responses []Responses
 
 	for website, url := range sites {
-		response, err := getHealth(url)
+		response, certDetails, err := getHealth(url)
 		if err != nil {
 			return nil, err
 		}
-		responses = append(responses, Responses{website, response.StatusCode})
+		responses = append(responses, Responses{website, response.StatusCode, certDetails})
 	}
 
 	return responses, nil
@@ -75,8 +90,15 @@ func createEmbed(responses []Responses, now time.Time) DiscordEmbed {
 
 	for _, response := range responses {
 		fields = append(fields, EmbedField{
-			Name:   response.Website,
-			Value:  fmt.Sprintf("%d", response.StatusCode),
+			Name: response.Website,
+			//Value:          fmt.Sprintf("%d", response.StatusCode),
+			Value: fmt.Sprintf("Status: %d\n\n*SSL/TLS Status*\n-----------------\nIssuer: %s\nDomain: %s\nValid From: %s\nValid Until: %s",
+				response.StatusCode,
+				response.Issuer,
+				response.Domain,
+				response.ValidFrom.Format(DateFormat),
+				response.ValidUntil.Format(DateFormat),
+			),
 			Inline: true,
 		})
 
@@ -108,10 +130,21 @@ func main() {
 	}
 
 	discordWebhook := os.Getenv("DISCORD_HEALTHCHECK_WEBHOOK")
+	sites := map[string]string{
+		"Echecs France Results API": os.Getenv("ECHECS_FRANCE_RESULTS_API"),
+		"Chess PDF API":             os.Getenv("CHESS_PDF_API"),
+	}
 
-	responses, err := checkHealthOfSites()
+	responses, err := checkHealthOfSites(sites)
 	if err != nil {
 		log.Fatalf("Failed to check health of sites: %v", err)
+	}
+
+	for _, response := range responses {
+		fmt.Println(response.Issuer)
+		fmt.Println(response.Domain)
+		fmt.Println(response.ValidFrom)
+		fmt.Println(response.ValidUntil)
 	}
 
 	now := time.Now()
