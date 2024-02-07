@@ -44,6 +44,7 @@ type DiscordEmbed struct {
 
 const DateFormat = "02/01/2006 15:04:05"
 
+// getHealth makes a GET request to the given URL and returns the response and certificate details
 func getHealth(url string) (*http.Response, CertificateDetails, error) {
 	resp, err := http.Get(url)
 	if err != nil {
@@ -70,6 +71,7 @@ func getHealth(url string) (*http.Response, CertificateDetails, error) {
 	return resp, certDetails, nil
 }
 
+// checkHealthOfSites iterates through the sites detailed in main() and calls getHealth for each one
 func checkHealthOfSites(sites map[string]string) ([]Responses, error) {
 	var responses []Responses
 
@@ -84,6 +86,7 @@ func checkHealthOfSites(sites map[string]string) ([]Responses, error) {
 	return responses, nil
 }
 
+// createEmbed creates a Discord embed with the health check results, ready for sending via the Discord webhook
 func createEmbed(responses []Responses, now time.Time) DiscordEmbed {
 	var fields []EmbedField
 	color := 0x00ff00 // default color is green for all status 200
@@ -91,7 +94,6 @@ func createEmbed(responses []Responses, now time.Time) DiscordEmbed {
 	for _, response := range responses {
 		fields = append(fields, EmbedField{
 			Name: response.Website,
-			//Value:          fmt.Sprintf("%d", response.StatusCode),
 			Value: fmt.Sprintf("Status: %d\n\n*SSL/TLS Status*\n-----------------\nIssuer: %s\nDomain: %s\nValid From: %s\nValid Until: %s",
 				response.StatusCode,
 				response.Issuer,
