@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/joho/godotenv"
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -33,11 +35,10 @@ type DiscordEmbed struct {
 }
 
 const DateFormat = "02/01/2006 15:04:05"
-const DiscordWebhook = "https://discord.com/api/webhooks/1202341979208294450/zSlgbQ4X4gJ3zXsKwRJ6lqxs7QtpN8dtJENd0Z_vP6c-shFCWa7xipGTPOgwvMQL505B"
 
 var sites = map[string]string{
-	"Echecs France Results API": "https://api.echecsfrance.com/api/v1/health",
-	"Chess PDF API":             "https://api.chess-scribe.org/api/v1/health",
+	"Echecs France Results API": os.Getenv("ECHECS_FRANCE_RESULTS_API"),
+	"Chess PDF API":             os.Getenv("CHESS_PDF_API"),
 }
 
 func getHealth(url string) (*http.Response, error) {
@@ -99,6 +100,15 @@ func createEmbed(responses []Responses, now time.Time) DiscordEmbed {
 }
 
 func main() {
+	if _, err := os.Stat(".env"); err == nil {
+		err := godotenv.Load()
+		if err != nil {
+			log.Fatalf("Error loading .env file: %v", err)
+		}
+	}
+
+	discordWebhook := os.Getenv("DISCORD_HEALTHCHECK_WEBHOOK")
+
 	responses, err := checkHealthOfSites()
 	if err != nil {
 		log.Fatalf("Failed to check health of sites: %v", err)
@@ -112,7 +122,7 @@ func main() {
 		log.Fatalf("Failed to marshal discord embed: %v", err)
 	}
 
-	resp, err := http.Post(DiscordWebhook, "application/json", bytes.NewBuffer(jsonData))
+	resp, err := http.Post(discordWebhook, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		log.Fatalf("Failed to post to Discord: %v", err)
 	}
