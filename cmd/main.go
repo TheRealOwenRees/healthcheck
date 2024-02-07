@@ -124,6 +124,7 @@ func createEmbed(responses []Responses, now time.Time) DiscordEmbed {
 }
 
 func main() {
+	// load '.env' file if it exists (dev environment) or use OS environment variables (prod environment)
 	if _, err := os.Stat(".env"); err == nil {
 		err := godotenv.Load()
 		if err != nil {
@@ -131,32 +132,30 @@ func main() {
 		}
 	}
 
+	// change this to your own Discord webhook
 	discordWebhook := os.Getenv("DISCORD_HEALTHCHECK_WEBHOOK")
+
+	// change this to your own sites, set as environment variables
 	sites := map[string]string{
 		"Echecs France Results API": os.Getenv("ECHECS_FRANCE_RESULTS_API"),
 		"Chess PDF API":             os.Getenv("CHESS_PDF_API"),
 	}
 
+	// check health of sites and return responses including certificate details
 	responses, err := checkHealthOfSites(sites)
 	if err != nil {
 		log.Fatalf("Failed to check health of sites: %v", err)
 	}
 
-	for _, response := range responses {
-		fmt.Println(response.Issuer)
-		fmt.Println(response.Domain)
-		fmt.Println(response.ValidFrom)
-		fmt.Println(response.ValidUntil)
-	}
-
+	// create Discord embed and send to Discord webhook
 	now := time.Now()
 	discordEmbed := createEmbed(responses, now)
-
 	jsonData, err := json.Marshal(discordEmbed)
 	if err != nil {
 		log.Fatalf("Failed to marshal discord embed: %v", err)
 	}
 
+	// send to Discord
 	resp, err := http.Post(discordWebhook, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		log.Fatalf("Failed to post to Discord: %v", err)
