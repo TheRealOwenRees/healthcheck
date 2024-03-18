@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/joho/godotenv"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
 type CertificateDetails struct {
@@ -139,6 +140,7 @@ func main() {
 	sites := map[string]string{
 		"Echecs France Results API": os.Getenv("ECHECS_FRANCE_RESULTS_API"),
 		"Chess PDF API":             os.Getenv("CHESS_PDF_API"),
+		"Portfolio":                 os.Getenv("PORTFOLIO"),
 	}
 
 	// check health of sites and return responses including certificate details

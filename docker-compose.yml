@@ -5,7 +5,14 @@ services:
     image: healthcheck
     container_name: healthcheck
     build: .
-#    environment:
-#      - PORT=8080
-#      - ENV=production
+    env_file:
+      - .env
+
+secrets:
+  "ECHECS_FRANCE_RESULTS_API":
+    file: .env
+  "CHESS_PDF_API":
+    file: .env
+  "PORTFOLIO":
+    file: .env  
 
