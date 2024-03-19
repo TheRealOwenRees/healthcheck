@@ -95,14 +95,14 @@ func createEmbed(responses []Responses, now time.Time) DiscordEmbed {
 	for _, response := range responses {
 		fields = append(fields, EmbedField{
 			Name: response.Website,
-			Value: fmt.Sprintf("Status: %d\n\n*SSL/TLS Status*\n-----------------\nIssuer: %s\nDomain: %s\nValid From: %s\nValid Until: %s",
+			Value: fmt.Sprintf("Status: %d\n\n*SSL/TLS Status*\nIssuer: %s\nDomain: %s\nValid From: %s\nValid Until: %s\n-----------------\n",
 				response.StatusCode,
 				response.Issuer,
 				response.Domain,
 				response.ValidFrom.Format(DateFormat),
 				response.ValidUntil.Format(DateFormat),
 			),
-			Inline: true,
+			Inline: false,
 		})
 
 		if response.StatusCode != 200 {
