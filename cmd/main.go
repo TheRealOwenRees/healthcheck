@@ -141,7 +141,7 @@ func main() {
 		"Echecs France Results API": os.Getenv("ECHECS_FRANCE_RESULTS_API"),
 		"Chess PDF API":             os.Getenv("CHESS_PDF_API"),
 		"Portfolio":                 os.Getenv("PORTFOLIO"),
-		"FileServer":                os.Getenv("FILESERVER"),
+		"PlantID FileServer":        os.Getenv("PLANTID_FILESERVER"),
 	}
 
 	// check health of sites and return responses including certificate details
