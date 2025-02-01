@@ -1,12 +1,12 @@
-name: Produciton Deploy
+name: Production Deploy
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout code
@@ -29,16 +29,3 @@ jobs:
           port: ${{ secrets.PORT }}
           source: bin/*
           target: /home/${{ secrets.USERNAME }}
-
-#      - name: Deploy
-#        uses: appleboy/ssh-action@master
-#        with:
-#          host: ${{ secrets.HOST }}
-#          username: ${{ secrets.USERNAME }}
-#          key: ${{ secrets.SSH_KEY }}
-#          port: ${{ secrets.PORT }}
-#          script: |
-#            cd /home/${{ secrets.USERNAME }}/healthcheck
-#            git pull
-#            docker compose down
-#            docker compose up --build -d
